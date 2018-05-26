@@ -14,31 +14,19 @@ function getFileHash(filePath) {
         hash.setEncoding("hex");
         read.pipe(hash);
         read.on("end", () => {
-            hash.end()
-            resolve(hash.read())
+            hash.end();
+            resolve(hash.read());
         });
         read.on("error", reject);
     })
 
 }
 
-function copyIfNotExists(from, to) {
-    return fs.pathExists(to).then(exists => {
-        if (!exists) {
-            return fs.copy(from, to);
-        }
-    })
-}
-
-
 module.exports = function (content, map) {
-    // if (this.cacheable) this.cacheable(); TODO
     const callback = this.async();
     if (!CSS_URL_REGEXP.test(content)) {
         return content;
     }
-    const options = loaderUtils.getOptions(this) || {};
-    const outputPath = options.outputPath;
     const ast = css.parse(content);
     const resourcePath = path.dirname(this.resourcePath);
     const publicPath = this._compilation.outputOptions.publicPath;
@@ -56,8 +44,9 @@ module.exports = function (content, map) {
                     resPromises.push(getFileHash(sourceFilePath).then(fileHash => {
                         const outputName = `${fileHash}${path.extname(sourceFilePath)}`;
                         declaration.value = declaration.value.replace(url, urlUtils.resolve(publicPath, outputName));
-                        const distPath = path.join(outputPath, outputName);
-                        return copyIfNotExists(sourceFilePath, distPath);
+                        return fs.readFile(sourceFilePath).then(data => {
+                            this.emitFile(outputName, data);
+                        });
                     }));
                 }
             })
