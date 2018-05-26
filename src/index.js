@@ -2,45 +2,69 @@ const path = require("path");
 const fs = require("fs-extra");
 const crypto = require('crypto');
 const loaderUtils = require("loader-utils");
-const URL_REGEXP = /url\s*(\(\s*".*?"\s*\)|\(\s*.*?\s*\))/g;
 const css = require('css');
+const urlUtils = require("url");
+const CSS_URL_REGEXP = /url\s*(\(\s*.*?\s*\))/g;
+const URL_REGEXP = /^.+?\.\w+/;
+
+function getFileHash(filePath) {
+    return new Promise((resolve, reject) => {
+        const read = fs.ReadStream(filePath);
+        const hash = crypto.createHash('sha1');
+        hash.setEncoding("hex");
+        read.pipe(hash);
+        read.on("end", () => {
+            hash.end()
+            resolve(hash.read())
+        });
+        read.on("error", reject);
+    })
+
+}
+
+function copyIfNotExists(from, to) {
+    return fs.pathExists(to).then(exists => {
+        if (!exists) {
+            return fs.copy(from, to);
+        }
+    })
+}
 
 
 module.exports = function (content, map) {
     // if (this.cacheable) this.cacheable(); TODO
     const callback = this.async();
-    if (!URL_REGEXP.test(content)) {
+    if (!CSS_URL_REGEXP.test(content)) {
         return content;
     }
-    const hash = crypto.createHash('sha256');
-    const fileHash = hash.update(content).digest('hex');
     const options = loaderUtils.getOptions(this) || {};
-    const resourcePath = path.dirname(this.resourcePath);
+    const outputPath = options.outputPath;
     const ast = css.parse(content);
-    const copyList = [];
+    const resourcePath = path.dirname(this.resourcePath);
     const publicPath = this._compilation.outputOptions.publicPath;
+    const resPromises = [];
 
     ast.stylesheet.rules.forEach(rule => {
         if (rule.type === "rule") {
             rule.declarations.forEach(declaration => {
-                const urlValue = URL_REGEXP.exec(declaration.value);
+                const urlValue = declaration.value.match(CSS_URL_REGEXP);
                 if (urlValue) {
-                    const url = urlValue[0].replace(/^url\("?/, "").replace(/"?\)$/, "");
-                    const distFilePath = path.join(resourcePath, url); //TODO ss.png?..
-                    const outputName = `${fileHash}${path.extname(distFilePath)}`;
-                    declaration.value = declaration.value.replace(url, publicPath + outputName); //TODO join url and check
-                    copyList.push({
-                        from: distFilePath,
-                        to: path.join(options.outputPath, outputName)
-                    });
+                    const url = urlValue[0].replace(/^url\("?/, "").replace(/"?\)$/, "").trim();
+                    const clearPath = URL_REGEXP.exec(url)[0]; //get real path without url query
+                    const sourceFilePath = path.join(resourcePath, clearPath);
+
+                    resPromises.push(getFileHash(sourceFilePath).then(fileHash => {
+                        const outputName = `${fileHash}${path.extname(sourceFilePath)}`;
+                        declaration.value = declaration.value.replace(url, urlUtils.resolve(publicPath, outputName));
+                        const distPath = path.join(outputPath, outputName);
+                        return copyIfNotExists(sourceFilePath, distPath);
+                    }));
                 }
             })
         }
     });
 
-    Promise.all(copyList.map(({ from, to }) => fs.pathExists(to).then(exists => {
-        if (!exists) {
-            return fs.copy(from, to);
-        }
-    }))).then(() => callback(null, css.stringify(ast), map));
+    Promise.all(resPromises)
+        .then(() => callback(null, css.stringify(ast), map));
+
 };
