@@ -27,9 +27,11 @@ module.exports = function (content, map) {
     if (!CSS_URL_REGEXP.test(content)) {
         return content;
     }
+
+    const options = loaderUtils.getOptions(this) || {};
     const ast = css.parse(content);
     const resourcePath = path.dirname(this.resourcePath);
-    const publicPath = this._compilation.outputOptions.publicPath;
+    const publicPath = options.publicPath || this._compilation.outputOptions.publicPath;
     const resPromises = [];
 
     ast.stylesheet.rules.forEach(rule => {
