@@ -1,26 +1,12 @@
 const path = require("path");
 const fs = require("fs-extra");
-const crypto = require('crypto');
 const loaderUtils = require("loader-utils");
+const {getFileHash, getPublicPath}  = require("./utils");
 const css = require('css');
 const urlUtils = require("url");
 const CSS_URL_REGEXP = /url\s*(\(\s*.*?\s*\))/g;
 const URL_REGEXP = /^.+?\.\w+/;
 
-function getFileHash(filePath) {
-    return new Promise((resolve, reject) => {
-        const read = fs.ReadStream(filePath);
-        const hash = crypto.createHash('sha1');
-        hash.setEncoding("hex");
-        read.pipe(hash);
-        read.on("end", () => {
-            hash.end();
-            resolve(hash.read());
-        });
-        read.on("error", reject);
-    })
-
-}
 
 module.exports = function (content, map) {
     const callback = this.async();
@@ -31,7 +17,7 @@ module.exports = function (content, map) {
     const options = loaderUtils.getOptions(this) || {};
     const ast = css.parse(content);
     const resourcePath = path.dirname(this.resourcePath);
-    const publicPath = options.publicPath || this._compilation.outputOptions.publicPath;
+    const publicPath = getPublicPath(this._compilation, options);
     const resPromises = [];
 
     ast.stylesheet.rules.forEach(rule => {
