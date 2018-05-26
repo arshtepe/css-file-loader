@@ -20,14 +20,14 @@
 This loader **clones** files (images, fonts ...) which referenced from css file like `url (./image.png)`.
 
 ```css
-.seletor {
+.selector {
     background: url(./img.png) no-repeat -122px -293px;
     width: 16px;
 }
 ```
 it will be replaced by
 ```css
-.seletor {
+.selector {
     background: url([options.publicPath]/[file hash].png) no-repeat -122px -293px; 
     /*For example url(http://localhost/ad31..2a.png)  */
     width: 16px;
