@@ -66,7 +66,7 @@ Combine with other loaders like sass
 
 Name | Type | Default | Description
 ------------ | ------------- | -------------  | ------------- 
-`publicPath` | `{String}` | [output.publicPath](https://webpack.js.org/configuration/output/#output-publicpath) or `/` if `options.publicPath` and `output.publicPath` are empty | Must have slash at the end `/hello/` 
+`publicPath` | `{String}` | [output.publicPath](https://webpack.js.org/configuration/output/#output-publicpath) or `/` if `options.publicPath` and `output.publicPath` are empty | This option specifies the public URL of the output directory when referenced in a browser.**Must have slash at the end** `/hello/` 
 
 
 ## Usage with options
