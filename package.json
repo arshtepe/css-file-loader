@@ -1,6 +1,6 @@
 {
   "name": "css-file-loader",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "",
   "main": "./src/index.js",
   "scripts": {
@@ -13,7 +13,7 @@
     "fs-extra": "^6.0.1",
     "loader-utils": "^1.1.0"
   },
-
+  "homepage": "https://github.com/arshtepe/css-file-loader",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/arshtepe/css-file-loader.git"
