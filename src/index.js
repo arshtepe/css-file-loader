@@ -25,7 +25,7 @@ module.exports = function (content, map) {
             rule.declarations.forEach(declaration => {
                 const urlValue = declaration.value.match(CSS_URL_REGEXP);
                 if (urlValue) {
-                    const url = urlValue[0].replace(/^url\("?/, "").replace(/"?\)$/, "").trim();
+                    const url = urlValue[0].replace(/^url\(["']?/, "").replace(/["']?\)$/, "").trim();
                     const clearPath = URL_REGEXP.exec(url)[0]; //get real path without url query
                     const sourceFilePath = path.join(resourcePath, clearPath);
 
