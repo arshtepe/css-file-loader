@@ -11,7 +11,7 @@ const URL_REGEXP = /^.+?\.\w+/;
 module.exports = function (content, map) {
     const callback = this.async();
     if (!CSS_URL_REGEXP.test(content)) {
-        return content;
+        return callback(null, content, map);
     }
 
     const options = loaderUtils.getOptions(this) || {};
